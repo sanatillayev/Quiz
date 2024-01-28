@@ -25,16 +25,7 @@ class FlowTest: XCTestCase {
         sut.start()
 
         // then
-        XCTAssertEqual(router.routedQuestionCount, 0)
-    }
-    
-    func test_start_withOneQuestion_routeToQuestion() {
-        let router = RouterSpy()
-        let sut = Flow(questions: ["Q1"], router: router)
-
-        sut.start()
-
-        XCTAssertEqual(router.routedQuestionCount, 1)
+        XCTAssertTrue(router.routedQuestions.isEmpty)
     }
     
     func test_start_withOneQuestion_routeToCorrectQuestion() {
@@ -43,17 +34,45 @@ class FlowTest: XCTestCase {
 
         sut.start()
 
-        XCTAssertEqual(router.routedQuestionCount, 1)
+        XCTAssertEqual(router.routedQuestions, ["Q1"])
+    }
+    
+    func test_start_withTwoQuestions_routeToFirstQuestion() {
+        let router = RouterSpy()
+        let sut = Flow(questions: ["Q1","Q2"], router: router)
+
+        sut.start()
+
+        XCTAssertEqual(router.routedQuestions, ["Q1"])
+    }
+    
+    func test_startTwice_withTwoQuestions_routeToFirstQuestionTwice() {
+        let router = RouterSpy()
+        let sut = Flow(questions: ["Q1","Q2"], router: router)
+
+        sut.start()
+        sut.start()
+
+        XCTAssertEqual(router.routedQuestions, ["Q1", "Q1"])
+    }
+    
+    func test_startAndAnswerFirstQuestion_withTwoQuestions_routeToSecondQuestion() {
+        let router = RouterSpy()
+        let sut = Flow(questions: ["Q1","Q2"], router: router)
+
+        sut.start()
+        router.answerCallBack("A1")
+
+        XCTAssertEqual(router.routedQuestions, ["Q1", "Q2"])
     }
     
     class RouterSpy: Router {
-        var routedQuestionCount: Int = 0
-        var routedQuestion: String? = nil
-
+        var routedQuestions: [String] = []
+        var answerCallBack: ((String) -> Void) = { _ in }
         
-        func routeTo(question: String){
-            routedQuestionCount += 1
-            routedQuestion = question
+        func routeTo(question: String, answerCallBack: @escaping (String) -> Void){
+            routedQuestions.append(question)
+            self.answerCallBack = answerCallBack
         }
 
     }
